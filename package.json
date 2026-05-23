@@ -8,6 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@codesandbox/sandpack-react": "^2.20.0",
+    "mongoose": "^9.6.2",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"
