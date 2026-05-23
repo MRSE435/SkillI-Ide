@@ -9,40 +9,54 @@ export default function FileSidebar({
 }) {
   const fileList = Object.keys(files);
 
+  function getIcon(fileName) {
+    if (fileName.endsWith(".css")) return "🎨";
+    if (fileName.endsWith(".js") || fileName.endsWith(".jsx")) return "⚛️";
+    if (fileName.includes("components")) return "📦";
+    return "📄";
+  }
+
   return (
-    <aside className="flex flex-col rounded-2xl border border-white/10 bg-[#10101d] overflow-hidden">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-        <p className="text-sm font-semibold text-white">Explorer</p>
+    <aside className="h-full min-h-0 overflow-hidden rounded-2xl border border-white/10 bg-[#10101d] shadow-xl">
+      <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.02] px-4 py-3">
+        <div>
+          <p className="text-sm font-semibold text-white">Explorer</p>
+          <p className="text-[11px] text-gray-500">{fileList.length} files</p>
+        </div>
 
         <button
           onClick={createFile}
-          className="text-xs rounded-md bg-violet-600 px-2 py-1 text-white"
+          className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
         >
-          + File
+          + New
         </button>
       </div>
 
-      <div className="flex-1 overflow-auto p-3 text-sm">
-        <div className="mb-2 text-gray-400">▾ 📁 src</div>
+      <div className="h-[calc(100%-170px)] overflow-auto p-3">
+        <div className="mb-2 rounded-lg bg-white/5 px-3 py-2 text-xs font-semibold text-gray-300">
+          ▾ 📁 src
+        </div>
 
-        {fileList.map((fileName) => (
-          <div
-            key={fileName}
-            className="ml-3 mb-2 flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-gray-200"
-          >
-            <span className="truncate">
-              {fileName.includes("/components/") ? "📄 " : "⚛️ "}
-              {fileName.replace("/src/", "")}
-            </span>
-
-            <button
-              onClick={() => deleteFile(fileName)}
-              className="text-red-400 hover:text-red-300"
+        <div className="space-y-1">
+          {fileList.map((fileName) => (
+            <div
+              key={fileName}
+              className="group flex items-center justify-between rounded-lg px-3 py-2 text-xs text-gray-300 hover:bg-white/10"
             >
-              ✕
-            </button>
-          </div>
-        ))}
+              <span className="truncate">
+                <span className="mr-2">{getIcon(fileName)}</span>
+                {fileName.replace("/src/", "")}
+              </span>
+
+              <button
+                onClick={() => deleteFile(fileName)}
+                className="opacity-0 text-red-400 transition group-hover:opacity-100 hover:text-red-300"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       <DependenciesPanel

@@ -19,6 +19,17 @@
   }
 }
 
+
+.sp-code-editor {
+  height: 100% !important;
+}
+
+.sp-button {
+  background: #7c3aed !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

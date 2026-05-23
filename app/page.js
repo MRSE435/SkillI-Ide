@@ -9,8 +9,9 @@ import EditorPanel from "./components/EditorPanel";
 import PreviewPanel from "./components/PreviewPanel";
 import LanguageRunner from "./components/LanguageRunner";
 import SaveProjectButton from "./components/SaveProjectButton";
-import { starterFiles } from "./data/starterFiles";
 import BottomPanel from "./components/BottomPanel";
+import { starterFiles } from "./data/starterFiles";
+
 export default function Home() {
   const [files, setFiles] = useState(starterFiles);
   const [dependencies, setDependencies] = useState({});
@@ -79,7 +80,7 @@ export default function Home() {
   }
 
   return (
-    <main className="h-screen overflow-hidden bg-[#080812] text-white">
+    <main className="fixed inset-0 overflow-hidden bg-[#080812] text-white">
       <SandpackProvider
         template="react"
         theme="dark"
@@ -93,39 +94,58 @@ export default function Home() {
           dependencies,
         }}
       >
-        <TopBar title={title} setTitle={setTitle}>
-          <SaveProjectButton title={title} dependencies={dependencies} />
-        </TopBar>
-
-        <div className="flex items-center gap-3 border-b border-white/10 bg-[#0b0b16] px-4 py-3">
-          <button
-            onClick={() => setMode("sandbox")}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold ${mode === "sandbox"
-                ? "bg-violet-600 text-white"
-                : "bg-white/10 text-gray-300"
-              }`}
-          >
-            React Sandbox
-          </button>
-
-          <button
-            onClick={() => setMode("runner")}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold ${mode === "runner"
-                ? "bg-violet-600 text-white"
-                : "bg-white/10 text-gray-300"
-              }`}
-          >
-            Test Language
-          </button>
+        <div className="absolute left-0 right-0 top-0 h-16">
+          <TopBar title={title} setTitle={setTitle}>
+            <SaveProjectButton title={title} dependencies={dependencies} />
+          </TopBar>
         </div>
 
-        <section className="h-[calc(100vh-160px)] overflow-hidden p-4">
+        <div className="absolute left-0 right-0 top-16 flex h-[52px] items-center justify-between border-b border-white/10 bg-[#0b0b16] px-4">
+          <div className="flex rounded-xl border border-white/10 bg-white/5 p-1">
+            <button
+              onClick={() => setMode("sandbox")}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                mode === "sandbox"
+                  ? "bg-violet-600 text-white shadow-lg shadow-violet-900/30"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              React Sandbox
+            </button>
+
+            <button
+              onClick={() => setMode("runner")}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                mode === "runner"
+                  ? "bg-violet-600 text-white shadow-lg shadow-violet-900/30"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Test Language
+            </button>
+          </div>
+
+          <p className="hidden text-xs text-gray-500 md:block">
+            Build, preview, test and save projects from your browser
+          </p>
+        </div>
+
+        <section className="absolute bottom-0 left-0 right-0 top-[116px] overflow-hidden p-4">
           {mode === "sandbox" && (
-            <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_230px] gap-4">
+            <div
+              className="h-full"
+              style={{
+                display: "grid",
+                gridTemplateRows: "minmax(0, 1fr) 230px",
+                gap: "16px",
+              }}
+            >
               <div
-                className="grid min-h-0 gap-4"
+                className="min-h-0"
                 style={{
+                  display: "grid",
                   gridTemplateColumns: "260px minmax(0, 1fr) 470px",
+                  gap: "16px",
                 }}
               >
                 <FileSidebar
