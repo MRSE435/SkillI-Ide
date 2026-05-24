@@ -99,24 +99,30 @@ export default function Home() {
 
   return (
     <main className="fixed inset-0 overflow-hidden bg-[#080812] text-white">
-      <SandpackProvider
-        key={projectVersion}
-        template="react"
-        theme="dark"
-        files={files}
-        options={{
-          visibleFiles: Object.keys(files),
-          activeFile: "/src/App.js",
-        }}
-        customSetup={{
-          entry: "/src/main.js",
-          dependencies: {
-            react: "^18.2.0",
-            "react-dom": "^18.2.0",
-            ...dependencies,
-          },
-        }}
-      >
+     <SandpackProvider
+  key={projectVersion}
+  template="react"
+  theme="dark"
+  files={files}
+  options={{
+    visibleFiles: Object.keys(files),
+    activeFile: "/src/App.js",
+    // Add these for better loading
+    recompileMode: "delayed",  // or "immediate"
+    recompileDelay: 500,
+    autorun: true,  // Auto-run the code
+  }}
+  customSetup={{
+    entry: "/src/main.js",
+    environment: "create-react-app",
+    dependencies: {
+      react: "^18.2.0",
+      "react-dom": "^18.2.0",
+      "react-scripts": "^5.0.1",
+      ...dependencies,
+    },
+  }}
+>
         <div className="absolute left-0 right-0 top-0 h-16">
           <TopBar title={title} setTitle={setTitle}>
             <SaveProjectButton title={title} dependencies={dependencies} />

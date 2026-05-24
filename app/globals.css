@@ -48,3 +48,48 @@ body,
 * {
   box-sizing: border-box;
 }
+
+
+/* Add to your existing globals.css */
+
+/* Smooth device transitions */
+.preview-device-frame {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile touch simulation hint */
+.preview-device-frame:hover::after {
+  content: "📱 Touch to interact";
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Custom scrollbar for preview area */
+.preview-area::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.preview-area::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+}
+
+.preview-area::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 4px;
+}
+
+.preview-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.3);
+}
