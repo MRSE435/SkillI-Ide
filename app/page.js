@@ -23,33 +23,35 @@ export default function Home() {
   const [projectVersion, setProjectVersion] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [previewFullscreen, setPreviewFullscreen] = useState(false);
 
-  // Check if mobile
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const check = () => {
+      const w = window.innerWidth;
+      setIsMobile(w < 768);
+      setIsTablet(w >= 768 && w < 1024);
     };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
   useEffect(() => {
     async function loadLatestProject() {
       try {
-        const response = await fetch("/api/projects");
-        const data = await response.json();
+        const res = await fetch("/api/projects");
+        const data = await res.json();
         if (data.success && data.projects.length > 0) {
-          const latestProject = data.projects[0];
-          setTitle(latestProject.title || "React Sandbox Project");
-          setFiles(normalizeFiles(latestProject.files || starterFiles));
-          setDependencies(latestProject.dependencies || {});
+          const p = data.projects[0];
+          setTitle(p.title || "React Sandbox Project");
+          setFiles(normalizeFiles(p.files || starterFiles));
+          setDependencies(p.dependencies || {});
         } else {
           setFiles(normalizeFiles(starterFiles));
         }
-        setProjectVersion((prev) => prev + 1);
-      } catch (error) {
-        console.log("Project load failed:", error);
+        setProjectVersion((v) => v + 1);
+      } catch {
         setFiles(normalizeFiles(starterFiles));
       } finally {
         setLoading(false);
@@ -59,55 +61,43 @@ export default function Home() {
   }, []);
 
   function createFile() {
-    let fileName = prompt("Enter file path, example: /src/components/Card.js");
+    let fileName = prompt("Enter file path, e.g. /src/components/Card.js");
     if (!fileName) return;
     if (!fileName.startsWith("/")) fileName = "/" + fileName;
     if (!fileName.startsWith("/src/")) fileName = "/src" + fileName;
-    if (files[fileName]) {
-      alert("File already exists");
-      return;
-    }
+    if (files[fileName]) { alert("File already exists"); return; }
     setFiles({
       ...files,
-      [fileName]: {
-        code: `export default function Component() {
-  return <div>New Component</div>;
-}`,
-      },
+      [fileName]: { code: `export default function Component() {\n  return <div>New Component</div>;\n}` },
     });
-    setProjectVersion((prev) => prev + 1);
-    setIsSidebarOpen(false); // Close sidebar on mobile after creating file
+    setProjectVersion((v) => v + 1);
+    setIsSidebarOpen(false);
   }
 
   function deleteFile(fileName) {
-    if (
-      fileName === "/src/App.js" ||
-      fileName === "/src/main.js" ||
-      fileName === "/src/styles.css"
-    ) {
+    if (["/src/App.js", "/src/main.js", "/src/styles.css"].includes(fileName)) {
       alert("You cannot delete important starter files");
       return;
     }
-    const updatedFiles = { ...files };
-    delete updatedFiles[fileName];
-    setFiles(updatedFiles);
-    setProjectVersion((prev) => prev + 1);
+    const updated = { ...files };
+    delete updated[fileName];
+    setFiles(updated);
+    setProjectVersion((v) => v + 1);
   }
 
   function installPackage(packageName) {
-    setDependencies({
-      ...dependencies,
-      [packageName]: "latest",
-    });
-    setProjectVersion((prev) => prev + 1);
+    setDependencies({ ...dependencies, [packageName]: "latest" });
+    setProjectVersion((v) => v + 1);
   }
+
+  const useDrawer = isMobile || isTablet;
 
   if (loading) {
     return (
       <main className="fixed inset-0 flex items-center justify-center bg-[#080812] text-white">
-        <div className="text-center p-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto mb-4"></div>
-          Loading project...
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-violet-500 mx-auto mb-3"></div>
+          <p className="text-sm text-gray-400">Loading project…</p>
         </div>
       </main>
     );
@@ -140,115 +130,117 @@ export default function Home() {
       >
         {/* Top Bar */}
         <div className="absolute left-0 right-0 top-0 h-14 md:h-16 z-20">
-          <TopBar 
-            title={title} 
+          <TopBar
+            title={title}
             setTitle={setTitle}
-            onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            onMenuClick={() => setIsSidebarOpen((o) => !o)}
+            showMenu={useDrawer}
             isMobile={isMobile}
+            onRunClick={() => { if (isMobile || isTablet) setPreviewFullscreen(true); }}
           >
             <SaveProjectButton title={title} dependencies={dependencies} />
           </TopBar>
         </div>
 
         {/* Mode Switcher */}
-        <div className="absolute left-0 right-0 top-14 md:top-16 h-[56px] border-b border-white/10 bg-[#0b0b16] px-2 md:px-4 z-10">
-          <div className="flex h-full items-center justify-between">
-            <div className="flex rounded-xl border border-white/10 bg-white/5 p-1">
+        <div className="absolute left-0 right-0 top-14 md:top-16 h-[52px] border-b border-white/10 bg-[#0b0b16] px-3 md:px-5 z-10 flex items-center justify-between">
+          <div className="flex rounded-xl border border-white/10 bg-white/5 p-1">
+            {["sandbox", "runner"].map((m) => (
               <button
-                onClick={() => setMode("sandbox")}
-                className={`rounded-lg px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold transition ${
-                  mode === "sandbox"
-                    ? "bg-violet-600 text-white"
+                key={m}
+                onClick={() => setMode(m)}
+                className={`rounded-lg px-3 md:px-4 py-1.5 text-xs md:text-sm font-semibold transition-all ${
+                  mode === m
+                    ? "bg-violet-600 text-white shadow-lg shadow-violet-900/40"
                     : "text-gray-400 hover:text-white"
                 }`}
               >
-                React Sandbox
+                {m === "sandbox" ? "React Sandbox" : "Test Language"}
               </button>
-              <button
-                onClick={() => setMode("runner")}
-                className={`rounded-lg px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold transition ${
-                  mode === "runner"
-                    ? "bg-violet-600 text-white"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Test Language
-              </button>
-            </div>
-            <p className="hidden md:block text-xs text-gray-500">
-              Build, preview and test apps directly in browser
-            </p>
+            ))}
           </div>
+          <p className="hidden lg:block text-xs text-gray-500">
+            Build, preview and test apps in your browser
+          </p>
         </div>
 
         {/* Main Content */}
-        <section className="absolute inset-x-0 bottom-0 top-[110px] md:top-[120px] overflow-hidden p-2 md:p-4">
+        <section className="absolute inset-x-0 bottom-0 top-[110px] md:top-[116px] overflow-hidden p-2 md:p-3">
           {mode === "sandbox" && (
             <>
-              {/* Mobile Sidebar Overlay */}
-              {isMobile && isSidebarOpen && (
-                <div 
-                  className="fixed inset-0 bg-black/70 z-30"
+              {/* Drawer backdrop */}
+              {useDrawer && isSidebarOpen && (
+                <div
+                  className="fixed inset-0 bg-black/70 backdrop-blur-sm z-30"
                   onClick={() => setIsSidebarOpen(false)}
                 />
               )}
-              
+
+              {/* Slide-in sidebar drawer */}
+              {useDrawer && (
+                <div
+                  className={`fixed left-0 top-0 h-full w-72 bg-[#0b0b16] border-r border-white/10 z-40 shadow-2xl transition-transform duration-300 ease-out ${
+                    isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+                  }`}
+                >
+                  <div className="h-14 px-4 border-b border-white/10 flex items-center justify-between">
+                    <span className="text-sm font-semibold">Files</span>
+                    <button
+                      onClick={() => setIsSidebarOpen(false)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/8 text-gray-400 hover:text-white hover:bg-white/15 transition text-sm"
+                    >✕</button>
+                  </div>
+                  <FileSidebar
+                    files={files}
+                    createFile={createFile}
+                    deleteFile={deleteFile}
+                    dependencies={dependencies}
+                    installPackage={installPackage}
+                    isMobile={true}
+                    onClose={() => setIsSidebarOpen(false)}
+                  />
+                </div>
+              )}
+
+              {/* Grid */}
               <div
-                className="grid h-full gap-2 md:gap-4"
-                style={{
-                  gridTemplateRows: isMobile 
-                    ? "1fr 200px" 
-                    : "minmax(0,1fr) 220px",
-                }}
+                className="grid h-full gap-2 md:gap-3"
+                style={{ gridTemplateRows: isMobile ? "1fr 170px" : "minmax(0,1fr) 195px" }}
               >
                 <div
-                  className="grid min-h-0 gap-2 md:gap-4"
+                  className="grid min-h-0 gap-2 md:gap-3"
                   style={{
-                    gridTemplateColumns: isMobile 
-                      ? "1fr" 
-                      : "260px minmax(0,1fr) 1fr",
+                    gridTemplateColumns: isMobile
+                      ? "1fr"
+                      : isTablet
+                      ? "1fr 1fr"
+                      : "240px 1fr 1fr",
                   }}
                 >
-                  {/* File Sidebar - Mobile conditional */}
-                  {(isMobile && isSidebarOpen) ? (
-                    <div className="fixed left-0 top-0 h-full w-80 bg-[#0b0b16] border-r border-white/10 z-40 shadow-2xl animate-slideIn">
-                      <div className="p-4 border-b border-white/10 flex justify-between items-center">
-                        <h3 className="font-semibold">Files</h3>
-                        <button 
-                          onClick={() => setIsSidebarOpen(false)}
-                          className="text-gray-400 hover:text-white"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <FileSidebar
-                        files={files}
-                        createFile={createFile}
-                        deleteFile={deleteFile}
-                        dependencies={dependencies}
-                        installPackage={installPackage}
-                        isMobile={true}
-                        onClose={() => setIsSidebarOpen(false)}
-                      />
-                    </div>
-                  ) : (
-                    !isMobile && (
-                      <FileSidebar
-                        files={files}
-                        createFile={createFile}
-                        deleteFile={deleteFile}
-                        dependencies={dependencies}
-                        installPackage={installPackage}
-                        isMobile={false}
-                      />
-                    )
+                  {!useDrawer && (
+                    <FileSidebar
+                      files={files}
+                      createFile={createFile}
+                      deleteFile={deleteFile}
+                      dependencies={dependencies}
+                      installPackage={installPackage}
+                      isMobile={false}
+                    />
                   )}
-                  
-                  <EditorPanel isMobile={isMobile} />
-                  <PreviewPanel isMobile={isMobile} />
+                  <EditorPanel isMobile={isMobile} isTablet={isTablet} />
+                  <PreviewPanel
+                    isMobile={isMobile}
+                    isTablet={isTablet}
+                    externalFullscreen={previewFullscreen}
+                    onExternalFullscreenChange={setPreviewFullscreen}
+                  />
                 </div>
-                
-                <BottomPanel files={files} dependencies={dependencies} isMobile={isMobile} />
+                <BottomPanel
+                  files={files}
+                  dependencies={dependencies}
+                  isMobile={isMobile}
+                  isTablet={isTablet}
+                />
               </div>
             </>
           )}
