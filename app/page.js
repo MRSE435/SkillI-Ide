@@ -21,6 +21,18 @@ export default function Home() {
   const [mode, setMode] = useState("sandbox");
   const [loading, setLoading] = useState(true);
   const [projectVersion, setProjectVersion] = useState(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     async function loadLatestProject() {
@@ -64,6 +76,7 @@ export default function Home() {
       },
     });
     setProjectVersion((prev) => prev + 1);
+    setIsSidebarOpen(false); // Close sidebar on mobile after creating file
   }
 
   function deleteFile(fileName) {
@@ -92,101 +105,154 @@ export default function Home() {
   if (loading) {
     return (
       <main className="fixed inset-0 flex items-center justify-center bg-[#080812] text-white">
-        Loading project...
+        <div className="text-center p-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto mb-4"></div>
+          Loading project...
+        </div>
       </main>
     );
   }
 
   return (
     <main className="fixed inset-0 overflow-hidden bg-[#080812] text-white">
-     <SandpackProvider
-  key={projectVersion}
-  template="react"
-  theme="dark"
-  files={files}
-  options={{
-    visibleFiles: Object.keys(files),
-    activeFile: "/src/App.js",
-    // Add these for better loading
-    recompileMode: "delayed",  // or "immediate"
-    recompileDelay: 500,
-    autorun: true,  // Auto-run the code
-  }}
-  customSetup={{
-    entry: "/src/main.js",
-    environment: "create-react-app",
-    dependencies: {
-      react: "^18.2.0",
-      "react-dom": "^18.2.0",
-      "react-scripts": "^5.0.1",
-      ...dependencies,
-    },
-  }}
->
-        <div className="absolute left-0 right-0 top-0 h-16">
-          <TopBar title={title} setTitle={setTitle}>
+      <SandpackProvider
+        key={projectVersion}
+        template="react"
+        theme="dark"
+        files={files}
+        options={{
+          visibleFiles: Object.keys(files),
+          activeFile: "/src/App.js",
+          recompileMode: "delayed",
+          recompileDelay: 500,
+          autorun: true,
+        }}
+        customSetup={{
+          entry: "/src/main.js",
+          environment: "create-react-app",
+          dependencies: {
+            react: "^18.2.0",
+            "react-dom": "^18.2.0",
+            "react-scripts": "^5.0.1",
+            ...dependencies,
+          },
+        }}
+      >
+        {/* Top Bar */}
+        <div className="absolute left-0 right-0 top-0 h-14 md:h-16 z-20">
+          <TopBar 
+            title={title} 
+            setTitle={setTitle}
+            onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            isMobile={isMobile}
+          >
             <SaveProjectButton title={title} dependencies={dependencies} />
           </TopBar>
         </div>
 
-        <div className="absolute left-0 right-0 top-16 h-[56px] border-b border-white/10 bg-[#0b0b16] px-4">
+        {/* Mode Switcher */}
+        <div className="absolute left-0 right-0 top-14 md:top-16 h-[56px] border-b border-white/10 bg-[#0b0b16] px-2 md:px-4 z-10">
           <div className="flex h-full items-center justify-between">
             <div className="flex rounded-xl border border-white/10 bg-white/5 p-1">
               <button
                 onClick={() => setMode("sandbox")}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold ${
+                className={`rounded-lg px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold transition ${
                   mode === "sandbox"
                     ? "bg-violet-600 text-white"
-                    : "text-gray-400"
+                    : "text-gray-400 hover:text-white"
                 }`}
               >
                 React Sandbox
               </button>
               <button
                 onClick={() => setMode("runner")}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold ${
+                className={`rounded-lg px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold transition ${
                   mode === "runner"
                     ? "bg-violet-600 text-white"
-                    : "text-gray-400"
+                    : "text-gray-400 hover:text-white"
                 }`}
               >
                 Test Language
               </button>
             </div>
-            <p className="hidden text-xs text-gray-500 md:block">
+            <p className="hidden md:block text-xs text-gray-500">
               Build, preview and test apps directly in browser
             </p>
           </div>
         </div>
 
-        <section className="absolute inset-x-0 bottom-0 top-[120px] overflow-hidden p-4">
+        {/* Main Content */}
+        <section className="absolute inset-x-0 bottom-0 top-[110px] md:top-[120px] overflow-hidden p-2 md:p-4">
           {mode === "sandbox" && (
-            <div
-              className="grid h-full gap-4"
-              style={{
-                gridTemplateRows: "minmax(0,1fr) 220px",
-              }}
-            >
+            <>
+              {/* Mobile Sidebar Overlay */}
+              {isMobile && isSidebarOpen && (
+                <div 
+                  className="fixed inset-0 bg-black/70 z-30"
+                  onClick={() => setIsSidebarOpen(false)}
+                />
+              )}
+              
               <div
-                className="grid min-h-0 gap-4"
+                className="grid h-full gap-2 md:gap-4"
                 style={{
-                  gridTemplateColumns: "260px minmax(0,1fr) 1fr",
+                  gridTemplateRows: isMobile 
+                    ? "1fr 200px" 
+                    : "minmax(0,1fr) 220px",
                 }}
               >
-                <FileSidebar
-                  files={files}
-                  createFile={createFile}
-                  deleteFile={deleteFile}
-                  dependencies={dependencies}
-                  installPackage={installPackage}
-                />
-                <EditorPanel />
-                <PreviewPanel />
+                <div
+                  className="grid min-h-0 gap-2 md:gap-4"
+                  style={{
+                    gridTemplateColumns: isMobile 
+                      ? "1fr" 
+                      : "260px minmax(0,1fr) 1fr",
+                  }}
+                >
+                  {/* File Sidebar - Mobile conditional */}
+                  {(isMobile && isSidebarOpen) ? (
+                    <div className="fixed left-0 top-0 h-full w-80 bg-[#0b0b16] border-r border-white/10 z-40 shadow-2xl animate-slideIn">
+                      <div className="p-4 border-b border-white/10 flex justify-between items-center">
+                        <h3 className="font-semibold">Files</h3>
+                        <button 
+                          onClick={() => setIsSidebarOpen(false)}
+                          className="text-gray-400 hover:text-white"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <FileSidebar
+                        files={files}
+                        createFile={createFile}
+                        deleteFile={deleteFile}
+                        dependencies={dependencies}
+                        installPackage={installPackage}
+                        isMobile={true}
+                        onClose={() => setIsSidebarOpen(false)}
+                      />
+                    </div>
+                  ) : (
+                    !isMobile && (
+                      <FileSidebar
+                        files={files}
+                        createFile={createFile}
+                        deleteFile={deleteFile}
+                        dependencies={dependencies}
+                        installPackage={installPackage}
+                        isMobile={false}
+                      />
+                    )
+                  )}
+                  
+                  <EditorPanel isMobile={isMobile} />
+                  <PreviewPanel isMobile={isMobile} />
+                </div>
+                
+                <BottomPanel files={files} dependencies={dependencies} isMobile={isMobile} />
               </div>
-              <BottomPanel files={files} dependencies={dependencies} />
-            </div>
+            </>
           )}
-          {mode === "runner" && <LanguageRunner />}
+          {mode === "runner" && <LanguageRunner isMobile={isMobile} />}
         </section>
       </SandpackProvider>
     </main>
